@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -91,10 +93,14 @@ func response(s string) bool {
 
 func dumpPairs() {
 	for _, pair := range serverResponsePairs {
+		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
+		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
 		fmt.Println("======================================================")
-		fmt.Println(pair.Challenge)
+		//fmt.Println(base64.StdEncoding.DecodeString(pair.Challenge))
+		fmt.Println(hex.EncodeToString(dataCallenge))
 		fmt.Println("------------------------------------------------------")
-		fmt.Println(pair.Response)
+		//fmt.Println(base64.StdEncoding.DecodeString(pair.Response))
+		fmt.Println(hex.EncodeToString(dataResponse))
 		fmt.Println("======================================================")
 	}
 }
