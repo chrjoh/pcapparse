@@ -94,7 +94,7 @@ func main() {
 		for packet := range packetSource.Packets() {
 			handlePacket(packet)
 		}
-		dumpPairs()
+		dumpNtlmv2()
 	}
 }
 
@@ -159,7 +159,7 @@ func response(s string) bool {
 //36 User Name security buffer
 //44 Workstation Name security buffer
 
-func dumpPairs() {
+func dumpNtlmv2() {
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
