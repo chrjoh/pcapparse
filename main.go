@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"regexp"
@@ -22,6 +23,32 @@ type ChallengeResponse struct {
 	Response  string
 }
 
+type ResponseHeader struct {
+	Sig  string
+	Type uint32
+
+	LmLen    uint16
+	LmMax    uint16
+	LmOffset uint16
+
+	NtLen    uint16
+	NtMax    uint16
+	NtOffset uint16
+
+	DomainLen    uint16
+	DomainMax    uint16
+	DomainOffset uint16
+
+	UserLen    uint16
+	UserMax    uint16
+	UserOffset uint16
+
+	HostLen    uint16
+	HostMax    uint16
+	HostOffset uint16
+}
+
+// http://www.opensource.apple.com/source/passwordserver_sasl/passwordserver_sasl-166/cyrus_sasl/plugins/ntlm.c
 var (
 	NTLM_SIG_OFFSET  = 0
 	NTLM_TYPE_OFFSET = 8
@@ -138,14 +165,46 @@ func dumpPairs() {
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
 
 		fmt.Println("======================================================")
-		//fmt.Println(base64.StdEncoding.DecodeString(pair.Challenge))
 		//offset to the challenge, 8 bytes long
-		fmt.Println(hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET:NTLM_TYPE2_CONTEXT_OFFSET]))
-		fmt.Println("------------------------------------------------------")
-		//fmt.Println(base64.StdEncoding.DecodeString(pair.Response))
-		fmt.Println(hex.EncodeToString(dataResponse))
-		fmt.Println("::::::::::::::::::::::::")
-		fmt.Println(hex.EncodeToString(dataResponse[:44]))
+		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
+		user, domain, nthashOne, nthashTwo := getResponseData(setResponseHeaderValues(dataResponse), dataResponse)
+		fmt.Println(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo)
 		fmt.Println("======================================================")
+	}
+}
+
+func getResponseData(r ResponseHeader, b []byte) (string, string, string, string) {
+	if r.UserLen == 0 {
+		return "", "", "", ""
+	}
+	user := string(b[r.UserOffset : r.UserOffset+r.UserLen])
+	domain := string(b[r.DomainOffset : r.DomainOffset+r.DomainLen])
+	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
+	nthashOne := hex.EncodeToString(nthash[:32])
+	nthashTwo := hex.EncodeToString(nthash[32:])
+
+	return user, domain, nthashOne, nthashTwo
+}
+
+func setResponseHeaderValues(b []byte) ResponseHeader {
+
+	return ResponseHeader{
+		Sig:          string(b[:8]),
+		Type:         binary.LittleEndian.Uint32(b[8:12]),
+		LmLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET : NTLM_TYPE3_LMRESP_OFFSET+2]),
+		LmMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+2 : NTLM_TYPE3_LMRESP_OFFSET+4]),
+		LmOffset:     binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+4 : NTLM_TYPE3_LMRESP_OFFSET+6]),
+		NtLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET : NTLM_TYPE3_NTRESP_OFFSET+2]),
+		NtMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET+2 : NTLM_TYPE3_NTRESP_OFFSET+4]),
+		NtOffset:     binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET+4 : NTLM_TYPE3_NTRESP_OFFSET+6]),
+		DomainLen:    binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET : NTLM_TYPE3_DOMAIN_OFFSET+2]),
+		DomainMax:    binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET+2 : NTLM_TYPE3_DOMAIN_OFFSET+4]),
+		DomainOffset: binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET+4 : NTLM_TYPE3_DOMAIN_OFFSET+6]),
+		UserLen:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET : NTLM_TYPE3_USER_OFFSET+2]),
+		UserMax:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET+2 : NTLM_TYPE3_USER_OFFSET+4]),
+		UserOffset:   binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET+4 : NTLM_TYPE3_USER_OFFSET+6]),
+		HostLen:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET : NTLM_TYPE3_WORKSTN_OFFSET+2]),
+		HostMax:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET+2 : NTLM_TYPE3_WORKSTN_OFFSET+4]),
+		HostOffset:   binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET+4 : NTLM_TYPE3_WORKSTN_OFFSET+6]),
 	}
 }
