@@ -98,14 +98,23 @@ func main() {
 	}
 }
 
-func handlePacket(packet gopacket.Packet) {
+func isTcpPacket(packet gopacket.Packet) bool {
+
 	if packet == nil {
-		return
+		return false
 	}
 
 	if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
+		return false
+	}
+	return true
+}
+
+func handlePacket(packet gopacket.Packet) {
+	if !isTcpPacket(packet) {
 		return
 	}
+
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
@@ -142,29 +151,12 @@ func response(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
 
-// ntlmv2 challenge type 2
-// 0  NTLMSSP Signature
-// 8  NTLM Message Type
-// 12 Target Name
-// 20 Flags
-// 24 Challenge
-// 32 end of header, start of optional data blocks
-
-// ntlmv2 response type 3
-//0 NTLMSSP Signature Null-terminated ASCII "NTLMSSP" (0x4e544c4d53535000)
-//8 NTLM Message Type long (0x03000000)
-//12 LM/LMv2 Response security buffer
-//20 NTLM/NTLMv2 Response security buffer
-//28 Target Name security buffer
-//36 User Name security buffer
-//44 Workstation Name security buffer
-
 func dumpNtlmv2() {
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
 
-		//offset to the challenge, 8 bytes long
+		//offset to the challenge and the challenge is 8 bytes long
 		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
 		user, domain, nthashOne, nthashTwo := getResponseData(setResponseHeaderValues(dataResponse), dataResponse)
 		if user != "" {
@@ -177,10 +169,11 @@ func getResponseData(r ResponseHeader, b []byte) (string, string, string, string
 	if r.UserLen == 0 {
 		return "", "", "", ""
 	}
+	// each char is null terminated
 	user := strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1)
 	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
 	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
-	nthashOne := hex.EncodeToString(nthash[:16])
+	nthashOne := hex.EncodeToString(nthash[:16]) // first part of the hash is 16 bytes
 	nthashTwo := hex.EncodeToString(nthash[16:])
 
 	return user, domain, nthashOne, nthashTwo
