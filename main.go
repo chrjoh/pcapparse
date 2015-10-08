@@ -168,7 +168,7 @@ func dumpNtlmv2() {
 		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
 		user, domain, nthashOne, nthashTwo := getResponseData(setResponseHeaderValues(dataResponse), dataResponse)
 		if user != "" {
-			fmt.Println(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo)
+			fmt.Printf("%s::%s:%s:%s:%s\n", user, domain, serverChallenge, nthashOne, nthashTwo)
 		}
 	}
 }
@@ -177,9 +177,9 @@ func getResponseData(r ResponseHeader, b []byte) (string, string, string, string
 	if r.UserLen == 0 {
 		return "", "", "", ""
 	}
-	user := string(b[r.UserOffset : r.UserOffset+r.UserLen])
+	user := strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1)
 	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
-	domain := string(b[r.DomainOffset : r.DomainOffset+r.DomainLen])
+	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
 	nthashOne := hex.EncodeToString(nthash[:16])
 	nthashTwo := hex.EncodeToString(nthash[16:])
 
