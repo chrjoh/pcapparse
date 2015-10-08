@@ -189,7 +189,7 @@ func getResponseData(r ResponseHeader, b []byte) (string, string, string, string
 func setResponseHeaderValues(b []byte) ResponseHeader {
 
 	return ResponseHeader{
-		Sig:          string(b[:8]),
+		Sig:          strings.Replace(string(b[:8]), "\x00", "", -1),
 		Type:         binary.LittleEndian.Uint32(b[8:12]),
 		LmLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET : NTLM_TYPE3_LMRESP_OFFSET+2]),
 		LmMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+2 : NTLM_TYPE3_LMRESP_OFFSET+4]),
