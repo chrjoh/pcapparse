@@ -194,8 +194,8 @@ func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, 
 
 func setResponseHeaderValues(b []byte) responseHeader {
 	return responseHeader{
-		Sig:          strings.Replace(string(b[:8]), "\x00", "", -1),
-		Type:         binary.LittleEndian.Uint32(b[8:12]),
+		Sig:          strings.Replace(string(b[NTLM_SIG_OFFSET:NTLM_SIG_OFFSET+8]), "\x00", "", -1),
+		Type:         binary.LittleEndian.Uint32(b[NTLM_TYPE_OFFSET : NTLM_TYPE_OFFSET+4]),
 		LmLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET : NTLM_TYPE3_LMRESP_OFFSET+2]),
 		LmMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+2 : NTLM_TYPE3_LMRESP_OFFSET+4]),
 		LmOffset:     binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+4 : NTLM_TYPE3_LMRESP_OFFSET+6]),
