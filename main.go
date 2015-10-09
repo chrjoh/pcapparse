@@ -94,7 +94,7 @@ func main() {
 		for packet := range packetSource.Packets() {
 			handlePacket(packet)
 		}
-		dumpNtlmv2()
+		dumpNtlmv()
 	}
 }
 
@@ -114,7 +114,6 @@ func handlePacket(packet gopacket.Packet) {
 	if !isTcpPacket(packet) {
 		return
 	}
-
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
@@ -151,21 +150,42 @@ func response(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
 
-func dumpNtlmv2() {
+func dumpNtlmv() {
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
 
 		//offset to the challenge and the challenge is 8 bytes long
 		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
-		user, domain, nthashOne, nthashTwo := getResponseData(setResponseHeaderValues(dataResponse), dataResponse)
-		if user != "" {
-			fmt.Printf("%s::%s:%s:%s:%s\n", user, domain, serverChallenge, nthashOne, nthashTwo)
+		headerValues := setResponseHeaderValues(dataResponse)
+		if headerValues.NtLen == 24 {
+			user, domain, lmHash := getResponseDataNtLMv1(setResponseHeaderValues(dataResponse), dataResponse)
+			if user != "" {
+				// NTLM v1 in .lc format
+				fmt.Printf("%s::%s:%s:%s\n", user, domain, lmHash, serverChallenge)
+			}
+		} else {
+			user, domain, nthashOne, nthashTwo := getResponseDataNtLMv2(setResponseHeaderValues(dataResponse), dataResponse)
+			if user != "" {
+				// Ntlm v2 in .lc format
+				fmt.Printf("%s::%s:%s:%s:%s\n", user, domain, serverChallenge, nthashOne, nthashTwo)
+			}
 		}
 	}
 }
 
-func getResponseData(r ResponseHeader, b []byte) (string, string, string, string) {
+func getResponseDataNtLMv1(r ResponseHeader, b []byte) (string, string, string) {
+	if r.UserLen == 0 {
+		return "", "", ""
+	}
+	// each char is null terminated
+	user := strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1)
+	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
+	lmHash := hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen])
+	return user, domain, lmHash
+}
+
+func getResponseDataNtLMv2(r ResponseHeader, b []byte) (string, string, string, string) {
 	if r.UserLen == 0 {
 		return "", "", "", ""
 	}
@@ -175,7 +195,6 @@ func getResponseData(r ResponseHeader, b []byte) (string, string, string, string
 	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
 	nthashOne := hex.EncodeToString(nthash[:16]) // first part of the hash is 16 bytes
 	nthashTwo := hex.EncodeToString(nthash[16:])
-
 	return user, domain, nthashOne, nthashTwo
 }
 
