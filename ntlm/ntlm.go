@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"unsafe"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -215,9 +216,23 @@ func setResponseHeaderValues(b []byte) responseHeader {
 }
 
 func extractUint32(b []byte, start, end int) uint32 {
-	return binary.LittleEndian.Uint32(b[start:end])
+	if isLittleEndian() {
+		return binary.LittleEndian.Uint32(b[start:end])
+	}
+	return binary.BigEndian.Uint32(b[start:end])
 }
 
 func extractUint16(b []byte, start, end int) uint16 {
-	return binary.LittleEndian.Uint16(b[start:end])
+	if isLittleEndian() {
+		return binary.LittleEndian.Uint16(b[start:end])
+	}
+	return binary.BigEndian.Uint16(b[start:end])
+}
+
+func isLittleEndian() bool {
+	var i int32 = 0x01020304
+	u := unsafe.Pointer(&i)
+	pb := (*byte)(u)
+	b := *pb
+	return (b == 0x04)
 }
