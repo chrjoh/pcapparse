@@ -90,24 +90,23 @@ var serverResponse = make(map[uint32]string)
 var serverResponsePairs = []ChallengeResponse{}
 
 func main() {
-
 	if handle, err := pcap.OpenOffline(pcapFile); err != nil {
 		panic(err)
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
-			handlePacket(packet)
+			if isTcpPacket(packet) {
+				handlePacket(packet)
+			}
 		}
 		dumpNtlmv()
 	}
 }
 
 func isTcpPacket(packet gopacket.Packet) bool {
-
 	if packet == nil {
 		return false
 	}
-
 	if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
 		return false
 	}
@@ -115,9 +114,6 @@ func isTcpPacket(packet gopacket.Packet) bool {
 }
 
 func handlePacket(packet gopacket.Packet) {
-	if !isTcpPacket(packet) {
-		return
-	}
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
@@ -203,7 +199,6 @@ func getResponseDataNtLMv2(r ResponseHeader, b []byte) (string, string, string, 
 }
 
 func setResponseHeaderValues(b []byte) ResponseHeader {
-
 	return ResponseHeader{
 		Sig:          strings.Replace(string(b[:8]), "\x00", "", -1),
 		Type:         binary.LittleEndian.Uint32(b[8:12]),
