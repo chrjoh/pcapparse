@@ -195,21 +195,29 @@ func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, 
 func setResponseHeaderValues(b []byte) responseHeader {
 	return responseHeader{
 		Sig:          strings.Replace(string(b[NTLM_SIG_OFFSET:NTLM_SIG_OFFSET+8]), "\x00", "", -1),
-		Type:         binary.LittleEndian.Uint32(b[NTLM_TYPE_OFFSET : NTLM_TYPE_OFFSET+4]),
-		LmLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET : NTLM_TYPE3_LMRESP_OFFSET+2]),
-		LmMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+2 : NTLM_TYPE3_LMRESP_OFFSET+4]),
-		LmOffset:     binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET+4 : NTLM_TYPE3_LMRESP_OFFSET+6]),
-		NtLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET : NTLM_TYPE3_NTRESP_OFFSET+2]),
-		NtMax:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET+2 : NTLM_TYPE3_NTRESP_OFFSET+4]),
-		NtOffset:     binary.LittleEndian.Uint16(b[NTLM_TYPE3_NTRESP_OFFSET+4 : NTLM_TYPE3_NTRESP_OFFSET+6]),
-		DomainLen:    binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET : NTLM_TYPE3_DOMAIN_OFFSET+2]),
-		DomainMax:    binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET+2 : NTLM_TYPE3_DOMAIN_OFFSET+4]),
-		DomainOffset: binary.LittleEndian.Uint16(b[NTLM_TYPE3_DOMAIN_OFFSET+4 : NTLM_TYPE3_DOMAIN_OFFSET+6]),
-		UserLen:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET : NTLM_TYPE3_USER_OFFSET+2]),
-		UserMax:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET+2 : NTLM_TYPE3_USER_OFFSET+4]),
-		UserOffset:   binary.LittleEndian.Uint16(b[NTLM_TYPE3_USER_OFFSET+4 : NTLM_TYPE3_USER_OFFSET+6]),
-		HostLen:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET : NTLM_TYPE3_WORKSTN_OFFSET+2]),
-		HostMax:      binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET+2 : NTLM_TYPE3_WORKSTN_OFFSET+4]),
-		HostOffset:   binary.LittleEndian.Uint16(b[NTLM_TYPE3_WORKSTN_OFFSET+4 : NTLM_TYPE3_WORKSTN_OFFSET+6]),
+		Type:         extractUint32(b, NTLM_TYPE_OFFSET, NTLM_TYPE_OFFSET+4),
+		LmLen:        extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET, NTLM_TYPE3_LMRESP_OFFSET+2),
+		LmMax:        extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+2, NTLM_TYPE3_LMRESP_OFFSET+4),
+		LmOffset:     extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+4, NTLM_TYPE3_LMRESP_OFFSET+6),
+		NtLen:        extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET, NTLM_TYPE3_NTRESP_OFFSET+2),
+		NtMax:        extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+2, NTLM_TYPE3_NTRESP_OFFSET+4),
+		NtOffset:     extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+4, NTLM_TYPE3_NTRESP_OFFSET+6),
+		DomainLen:    extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET, NTLM_TYPE3_DOMAIN_OFFSET+2),
+		DomainMax:    extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+2, NTLM_TYPE3_DOMAIN_OFFSET+4),
+		DomainOffset: extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+4, NTLM_TYPE3_DOMAIN_OFFSET+6),
+		UserLen:      extractUint16(b, NTLM_TYPE3_USER_OFFSET, NTLM_TYPE3_USER_OFFSET+2),
+		UserMax:      extractUint16(b, NTLM_TYPE3_USER_OFFSET+2, NTLM_TYPE3_USER_OFFSET+4),
+		UserOffset:   extractUint16(b, NTLM_TYPE3_USER_OFFSET+4, NTLM_TYPE3_USER_OFFSET+6),
+		HostLen:      extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET, NTLM_TYPE3_WORKSTN_OFFSET+2),
+		HostMax:      extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+2, NTLM_TYPE3_WORKSTN_OFFSET+4),
+		HostOffset:   extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+4, NTLM_TYPE3_WORKSTN_OFFSET+6),
 	}
+}
+
+func extractUint32(b []byte, start, end int) uint32 {
+	return binary.LittleEndian.Uint32(b[start:end])
+}
+
+func extractUint16(b []byte, start, end int) uint16 {
+	return binary.LittleEndian.Uint16(b[start:end])
 }
