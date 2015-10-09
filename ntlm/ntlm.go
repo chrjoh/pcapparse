@@ -13,40 +13,32 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-var regExp = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
-var regExpCha = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
-var regExpRes = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
-
 type challengeResponse struct {
 	Challenge string
 	Response  string
 }
 
 type responseHeader struct {
-	Sig  string
-	Type uint32
-
-	LmLen    uint16
-	LmMax    uint16
-	LmOffset uint16
-
-	NtLen    uint16
-	NtMax    uint16
-	NtOffset uint16
-
+	Sig          string
+	Type         uint32
+	LmLen        uint16
+	LmMax        uint16
+	LmOffset     uint16
+	NtLen        uint16
+	NtMax        uint16
+	NtOffset     uint16
 	DomainLen    uint16
 	DomainMax    uint16
 	DomainOffset uint16
-
-	UserLen    uint16
-	UserMax    uint16
-	UserOffset uint16
-
-	HostLen    uint16
-	HostMax    uint16
-	HostOffset uint16
+	UserLen      uint16
+	UserMax      uint16
+	UserOffset   uint16
+	HostLen      uint16
+	HostMax      uint16
+	HostOffset   uint16
 }
 
+// http://davenport.sourceforge.net/ntlm.html
 // http://www.opensource.apple.com/source/passwordserver_sasl/passwordserver_sasl-166/cyrus_sasl/plugins/ntlm.c
 // offset for the different type of messeges that are sent in a ntlm challenge-response
 var (
@@ -81,9 +73,13 @@ var (
 	NTLM_BUFFER_MAXLEN_OFFSET = 2
 	NTLM_BUFFER_OFFSET_OFFSET = 4
 	NTLM_BUFFER_SIZE          = 8
+
+	regExp              = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
+	regExpCha           = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
+	regExpRes           = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
+	serverResponse      = make(map[uint32]string)
+	serverResponsePairs = []challengeResponse{}
 )
-var serverResponse = make(map[uint32]string)
-var serverResponsePairs = []challengeResponse{}
 
 func Parse(inputFunc string) {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
