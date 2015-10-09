@@ -8,14 +8,15 @@ import (
 	"github.com/chrjoh/pcapparse/ntlm"
 )
 
-// to crakc the passwords following john the ripper was used passwords.txt conatins list of passwords that are gonna be tested
-// ./main -i steg3.pcap > test.lc
-//john --format=netntlmv2 test.lc  --wordlist=passwords.txt --rules:KoreLogicRulesAppend4NumSpecial --pot=john.pot
-var pcapFile = "steg3.pcap"
-
-// Command line flags
+// to crack the passwords following john the ripper was used passwords.txt conatins list of passwords that are gonna be tested
+// ./main -i steg3.pcap -o output_steg3.lc
+//john --format=netntlmv2 output_steg3.lc  --wordlist=passwords.txt --rules:KoreLogicRulesAppend4NumSpecial --pot=john.pot
 var (
-	inputFunc = flag.String("i", pcapFile, "Input file (.pcap)")
+	pcapFile   = "steg3.pcap"
+	outputFile = "output_steg3.lc"
+	// Command line flags
+	inputFunc  = flag.String("i", pcapFile, "Input file (.pcap)")
+	outputFunc = flag.String("o", outputFile, "Output file (.lc)")
 )
 
 func main() {
@@ -28,5 +29,5 @@ func main() {
 
 	// Parse the command line flags
 	flag.Parse()
-	ntlm.Parse(*inputFunc)
+	ntlm.Parse(*inputFunc, *outputFunc)
 }

@@ -2,6 +2,7 @@ PCAPparse
 =========
 
 The program parses the given pcap file trying to extract the ntlm challenge response
+(Was written to crack FFA challenge 2015, part 4)
 
 ## Dependencies
 Pcap parse requires [gopacket](github.com/google/gopacket)
@@ -21,6 +22,7 @@ $ pcapparse --help
 Command line arguments:
 
   -i "steg3.pcap": Input file (.pcap)
+  -o "output_steg3.lc": Output file (.lc)
 ```
 
 ## License (MIT)

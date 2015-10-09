@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -81,7 +81,7 @@ var (
 	serverResponsePairs = []challengeResponse{}
 )
 
-func Parse(inputFunc string) {
+func Parse(inputFunc string, outputFunc string) {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
@@ -91,7 +91,7 @@ func Parse(inputFunc string) {
 				handlePacket(packet)
 			}
 		}
-		dumpNtlmv()
+		dumpNtlmv(outputFunc)
 	}
 }
 
@@ -142,7 +142,8 @@ func response(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
 
-func dumpNtlmv() {
+func dumpNtlmv(outPutFile string) {
+	file, _ := os.Create(outPutFile)
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
@@ -154,13 +155,13 @@ func dumpNtlmv() {
 			user, domain, lmHash := getResponseDataNtLMv1(setResponseHeaderValues(dataResponse), dataResponse)
 			if user != "" {
 				// NTLM v1 in .lc format
-				fmt.Printf("%s::%s:%s:%s\n", user, domain, lmHash, serverChallenge)
+				file.WriteString(user + "::" + domain + ":" + lmHash + ":" + serverChallenge + "\n")
 			}
 		} else {
 			user, domain, nthashOne, nthashTwo := getResponseDataNtLMv2(setResponseHeaderValues(dataResponse), dataResponse)
 			if user != "" {
 				// Ntlm v2 in .lc format
-				fmt.Printf("%s::%s:%s:%s:%s\n", user, domain, serverChallenge, nthashOne, nthashTwo)
+				file.WriteString(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo + "\n")
 			}
 		}
 	}
