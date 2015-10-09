@@ -91,7 +91,7 @@ func Parse(inputFunc string, outputFunc string) {
 				handlePacket(packet)
 			}
 		}
-		dumpNtlmv(outputFunc)
+		dumpNtlm(outputFunc)
 	}
 }
 
@@ -143,7 +143,7 @@ func response(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
 
-func dumpNtlmv(outPutFile string) {
+func dumpNtlm(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
