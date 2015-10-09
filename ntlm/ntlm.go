@@ -105,6 +105,7 @@ func isTcpPacket(packet gopacket.Packet) bool {
 	return true
 }
 
+// assemble the correct challenge with the reposne
 func handlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
 	if app == nil {
