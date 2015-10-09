@@ -17,12 +17,12 @@ var regExp = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NT
 var regExpCha = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
 var regExpRes = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
 
-type ChallengeResponse struct {
+type challengeResponse struct {
 	Challenge string
 	Response  string
 }
 
-type ResponseHeader struct {
+type responseHeader struct {
 	Sig  string
 	Type uint32
 
@@ -83,7 +83,7 @@ var (
 	NTLM_BUFFER_SIZE          = 8
 )
 var serverResponse = make(map[uint32]string)
-var serverResponsePairs = []ChallengeResponse{}
+var serverResponsePairs = []challengeResponse{}
 
 func Parse(inputFunc string) {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
@@ -128,7 +128,7 @@ func handlePacket(packet gopacket.Packet) {
 				serverResponse[tcp.Ack] = baseStrings[2]
 			} else if response(s) {
 				if serverResponse[tcp.Seq] != "" {
-					serverResponsePairs = append(serverResponsePairs, ChallengeResponse{
+					serverResponsePairs = append(serverResponsePairs, challengeResponse{
 						Challenge: serverResponse[tcp.Seq],
 						Response:  baseStrings[2],
 					})
@@ -170,7 +170,7 @@ func dumpNtlmv() {
 	}
 }
 
-func getResponseDataNtLMv1(r ResponseHeader, b []byte) (string, string, string) {
+func getResponseDataNtLMv1(r responseHeader, b []byte) (string, string, string) {
 	if r.UserLen == 0 {
 		return "", "", ""
 	}
@@ -181,7 +181,7 @@ func getResponseDataNtLMv1(r ResponseHeader, b []byte) (string, string, string) 
 	return user, domain, lmHash
 }
 
-func getResponseDataNtLMv2(r ResponseHeader, b []byte) (string, string, string, string) {
+func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, string) {
 	if r.UserLen == 0 {
 		return "", "", "", ""
 	}
@@ -194,8 +194,8 @@ func getResponseDataNtLMv2(r ResponseHeader, b []byte) (string, string, string, 
 	return user, domain, nthashOne, nthashTwo
 }
 
-func setResponseHeaderValues(b []byte) ResponseHeader {
-	return ResponseHeader{
+func setResponseHeaderValues(b []byte) responseHeader {
+	return responseHeader{
 		Sig:          strings.Replace(string(b[:8]), "\x00", "", -1),
 		Type:         binary.LittleEndian.Uint32(b[8:12]),
 		LmLen:        binary.LittleEndian.Uint16(b[NTLM_TYPE3_LMRESP_OFFSET : NTLM_TYPE3_LMRESP_OFFSET+2]),
