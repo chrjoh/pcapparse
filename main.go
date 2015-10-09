@@ -13,6 +13,9 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// to crakc the passwords following john the ripper was used passwords.txt conatins list of passwords that are gonna be tested
+// ./main > test.lc
+//john --format=netntlmv2 test.lc  --wordlist=passwords.txt --rules:KoreLogicRulesAppend4NumSpecial --pot=john.pot
 var pcapFile = "steg3.pcap"
 var regExp = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
 var regExpCha = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
@@ -49,6 +52,7 @@ type ResponseHeader struct {
 }
 
 // http://www.opensource.apple.com/source/passwordserver_sasl/passwordserver_sasl-166/cyrus_sasl/plugins/ntlm.c
+// offset for the different type of messeges that are sent in a ntlm challenge-response
 var (
 	NTLM_SIG_OFFSET  = 0
 	NTLM_TYPE_OFFSET = 8
