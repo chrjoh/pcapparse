@@ -23,7 +23,7 @@ Command line arguments:
 
   -i "steg3.pcap": Input file (.pcap)
   -o "output_steg3.lc": Output file (.lc)
-  -t "ntlm" select what to look for in the pcap file, ntlm or ftp logins
+  -t "ntlm" select what type to look for in the pcap file: ntlm or ftp
 ```
 
 ## License (MIT)
