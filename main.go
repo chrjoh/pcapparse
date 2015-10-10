@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chrjoh/pcapparse/ftp"
 	"github.com/chrjoh/pcapparse/ntlm"
 )
 
@@ -17,6 +18,7 @@ var (
 	// Command line flags
 	inputFunc  = flag.String("i", pcapFile, "Input file (.pcap)")
 	outputFunc = flag.String("o", outputFile, "Output file (.lc)")
+	typeFunc   = flag.String("t", "ntlm", "Type select what tor parse the pcap file for, options: ntlm, ftp")
 )
 
 func main() {
@@ -29,5 +31,13 @@ func main() {
 
 	// Parse the command line flags
 	flag.Parse()
-	ntlm.Parse(*inputFunc, *outputFunc)
+	switch *typeFunc {
+	case "ntlm":
+		ntlm.Parse(*inputFunc, *outputFunc)
+	case "ftp":
+		ftp.Parse(*inputFunc, *outputFunc)
+		//fmt.Println("Not implemented yet")
+		//os.Exit(0)
+	}
+
 }
