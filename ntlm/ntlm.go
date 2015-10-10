@@ -146,6 +146,8 @@ func response(s string) bool {
 
 func dumpNtlm(outPutFile string) {
 	file, _ := os.Create(outPutFile)
+	defer file.Close()
+
 	for _, pair := range serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
