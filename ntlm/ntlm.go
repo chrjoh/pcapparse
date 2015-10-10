@@ -18,6 +18,11 @@ type challengeResponse struct {
 	Response  string
 }
 
+type ntlm struct {
+	serverResponse      map[uint32]string
+	serverResponsePairs []challengeResponse
+}
+
 type responseHeader struct {
 	Sig          string
 	Type         uint32
@@ -74,35 +79,55 @@ var (
 	NTLM_BUFFER_OFFSET_OFFSET = 4
 	NTLM_BUFFER_SIZE          = 8
 
-	regExp              = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
-	regExpCha           = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
-	regExpRes           = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
-	serverResponse      = make(map[uint32]string)
-	serverResponsePairs = []challengeResponse{}
+	regExp    = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
+	regExpCha = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
+	regExpRes = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
 )
 
 func Parse(inputFunc string, outputFunc string) {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
+		ntlmResult := ntlm{
+			serverResponse:      make(map[uint32]string),
+			serverResponsePairs: []challengeResponse{},
+		}
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
 			if util.IsTcpPacket(packet) {
-				handlePacket(packet)
+				ntlmResult.handlePacket(packet)
 			}
 		}
-		dumpNtlm(outputFunc)
+		ntlmResult.dumpNtlm(outputFunc)
 	}
 }
 
+func (n *ntlm) addServerResponse(key uint32, value string) {
+	n.serverResponse[key] = value
+}
+
+func (n *ntlm) addPairs(seq uint32, value string) {
+	if n.serverResponse[seq] != "" {
+		c := challengeResponse{
+			Challenge: n.serverResponse[seq],
+			Response:  value,
+		}
+		n.serverResponsePairs = append(n.serverResponsePairs, c)
+	}
+}
+
+func (n ntlm) serverResp(key uint32) string {
+	return n.serverResponse[key]
+}
+
 // assemble the correct challenge with the response
-func handlePacket(packet gopacket.Packet) {
+func (n *ntlm) handlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
 	}
-	n := len(app.Payload())
-	values := strings.Split(string(app.Payload()[:n]), "\r\n")
+	nlen := len(app.Payload())
+	values := strings.Split(string(app.Payload()[:nlen]), "\r\n")
 	for _, s := range values {
 		match := regExp.FindString(s)
 		if match != "" {
@@ -112,14 +137,9 @@ func handlePacket(packet gopacket.Packet) {
 			}
 			tcp := packet.TransportLayer().(*layers.TCP)
 			if challenge(s) {
-				serverResponse[tcp.Ack] = baseStrings[2]
+				n.addServerResponse(tcp.Ack, baseStrings[2])
 			} else if response(s) {
-				if serverResponse[tcp.Seq] != "" {
-					serverResponsePairs = append(serverResponsePairs, challengeResponse{
-						Challenge: serverResponse[tcp.Seq],
-						Response:  baseStrings[2],
-					})
-				}
+				n.addPairs(tcp.Seq, baseStrings[2])
 			}
 		}
 	}
@@ -133,14 +153,12 @@ func response(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
 
-func dumpNtlm(outPutFile string) {
+func (n ntlm) dumpNtlm(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
-
-	for _, pair := range serverResponsePairs {
+	for _, pair := range n.serverResponsePairs {
 		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
 		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
-
 		//offset to the challenge and the challenge is 8 bytes long
 		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
 		headerValues := setResponseHeaderValues(dataResponse)
