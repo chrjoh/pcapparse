@@ -2,13 +2,12 @@ package ntlm
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"os"
 	"regexp"
 	"strings"
-	"unsafe"
 
+	"github.com/chrjoh/pcapparse/util"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -88,22 +87,12 @@ func Parse(inputFunc string, outputFunc string) {
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
-			if isTcpPacket(packet) {
+			if util.IsTcpPacket(packet) {
 				handlePacket(packet)
 			}
 		}
 		dumpNtlm(outputFunc)
 	}
-}
-
-func isTcpPacket(packet gopacket.Packet) bool {
-	if packet == nil {
-		return false
-	}
-	if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
-		return false
-	}
-	return true
 }
 
 // assemble the correct challenge with the response
@@ -198,43 +187,21 @@ func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, 
 func setResponseHeaderValues(b []byte) responseHeader {
 	return responseHeader{
 		Sig:          strings.Replace(string(b[NTLM_SIG_OFFSET:NTLM_SIG_OFFSET+8]), "\x00", "", -1),
-		Type:         extractUint32(b, NTLM_TYPE_OFFSET, NTLM_TYPE_OFFSET+4),
-		LmLen:        extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET, NTLM_TYPE3_LMRESP_OFFSET+2),
-		LmMax:        extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+2, NTLM_TYPE3_LMRESP_OFFSET+4),
-		LmOffset:     extractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+4, NTLM_TYPE3_LMRESP_OFFSET+6),
-		NtLen:        extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET, NTLM_TYPE3_NTRESP_OFFSET+2),
-		NtMax:        extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+2, NTLM_TYPE3_NTRESP_OFFSET+4),
-		NtOffset:     extractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+4, NTLM_TYPE3_NTRESP_OFFSET+6),
-		DomainLen:    extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET, NTLM_TYPE3_DOMAIN_OFFSET+2),
-		DomainMax:    extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+2, NTLM_TYPE3_DOMAIN_OFFSET+4),
-		DomainOffset: extractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+4, NTLM_TYPE3_DOMAIN_OFFSET+6),
-		UserLen:      extractUint16(b, NTLM_TYPE3_USER_OFFSET, NTLM_TYPE3_USER_OFFSET+2),
-		UserMax:      extractUint16(b, NTLM_TYPE3_USER_OFFSET+2, NTLM_TYPE3_USER_OFFSET+4),
-		UserOffset:   extractUint16(b, NTLM_TYPE3_USER_OFFSET+4, NTLM_TYPE3_USER_OFFSET+6),
-		HostLen:      extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET, NTLM_TYPE3_WORKSTN_OFFSET+2),
-		HostMax:      extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+2, NTLM_TYPE3_WORKSTN_OFFSET+4),
-		HostOffset:   extractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+4, NTLM_TYPE3_WORKSTN_OFFSET+6),
+		Type:         util.ExtractUint32(b, NTLM_TYPE_OFFSET, NTLM_TYPE_OFFSET+4),
+		LmLen:        util.ExtractUint16(b, NTLM_TYPE3_LMRESP_OFFSET, NTLM_TYPE3_LMRESP_OFFSET+2),
+		LmMax:        util.ExtractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+2, NTLM_TYPE3_LMRESP_OFFSET+4),
+		LmOffset:     util.ExtractUint16(b, NTLM_TYPE3_LMRESP_OFFSET+4, NTLM_TYPE3_LMRESP_OFFSET+6),
+		NtLen:        util.ExtractUint16(b, NTLM_TYPE3_NTRESP_OFFSET, NTLM_TYPE3_NTRESP_OFFSET+2),
+		NtMax:        util.ExtractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+2, NTLM_TYPE3_NTRESP_OFFSET+4),
+		NtOffset:     util.ExtractUint16(b, NTLM_TYPE3_NTRESP_OFFSET+4, NTLM_TYPE3_NTRESP_OFFSET+6),
+		DomainLen:    util.ExtractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET, NTLM_TYPE3_DOMAIN_OFFSET+2),
+		DomainMax:    util.ExtractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+2, NTLM_TYPE3_DOMAIN_OFFSET+4),
+		DomainOffset: util.ExtractUint16(b, NTLM_TYPE3_DOMAIN_OFFSET+4, NTLM_TYPE3_DOMAIN_OFFSET+6),
+		UserLen:      util.ExtractUint16(b, NTLM_TYPE3_USER_OFFSET, NTLM_TYPE3_USER_OFFSET+2),
+		UserMax:      util.ExtractUint16(b, NTLM_TYPE3_USER_OFFSET+2, NTLM_TYPE3_USER_OFFSET+4),
+		UserOffset:   util.ExtractUint16(b, NTLM_TYPE3_USER_OFFSET+4, NTLM_TYPE3_USER_OFFSET+6),
+		HostLen:      util.ExtractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET, NTLM_TYPE3_WORKSTN_OFFSET+2),
+		HostMax:      util.ExtractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+2, NTLM_TYPE3_WORKSTN_OFFSET+4),
+		HostOffset:   util.ExtractUint16(b, NTLM_TYPE3_WORKSTN_OFFSET+4, NTLM_TYPE3_WORKSTN_OFFSET+6),
 	}
-}
-
-func extractUint32(b []byte, start, end int) uint32 {
-	if isLittleEndian() {
-		return binary.LittleEndian.Uint32(b[start:end])
-	}
-	return binary.BigEndian.Uint32(b[start:end])
-}
-
-func extractUint16(b []byte, start, end int) uint16 {
-	if isLittleEndian() {
-		return binary.LittleEndian.Uint16(b[start:end])
-	}
-	return binary.BigEndian.Uint16(b[start:end])
-}
-
-func isLittleEndian() bool {
-	var i int32 = 0x01020304
-	u := unsafe.Pointer(&i)
-	pb := (*byte)(u)
-	b := *pb
-	return (b == 0x04)
 }

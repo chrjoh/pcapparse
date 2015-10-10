@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/chrjoh/pcapparse/util"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -32,22 +33,12 @@ func Parse(inputFunc string, outputFunc string) {
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
-			if isTcpPacket(packet) {
+			if util.IsTcpPacket(packet) {
 				handlePacket(packet)
 			}
 		}
 		dumpFtp(outputFunc)
 	}
-}
-
-func isTcpPacket(packet gopacket.Packet) bool {
-	if packet == nil {
-		return false
-	}
-	if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
-		return false
-	}
-	return true
 }
 
 // Extract the ftp login reposnses and requests
@@ -65,7 +56,7 @@ func handlePacket(packet gopacket.Packet) {
 				tcp := packet.TransportLayer().(*layers.TCP)
 				userRequest[tcp.Ack] = strings.Split(s, " ")[1]
 				destPort[tcp.Ack] = destAndPort{
-					Destination: getSrcIP(packet),
+					Destination: util.GetDstIP(packet),
 					Port:        tcp.DstPort,
 				}
 			} else if regExpRes.FindString(s) != "" {
@@ -79,17 +70,9 @@ func handlePacket(packet gopacket.Packet) {
 	}
 }
 
-func getSrcIP(packet gopacket.Packet) string {
-	if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer != nil {
-		ip, _ := ipLayer.(*layers.IPv4)
-		return ip.SrcIP.String()
-	}
-	return ""
-}
-
 func dumpFtp(outPutFile string) {
 	file, _ := os.Create(outPutFile)
-	file.WriteString("#USER:PASSWORD:IP:PORT\n")
+	file.WriteString("#USER:PASSWORD:DST-IP:PORT\n")
 	defer file.Close()
 	for uAck, user := range userRequest {
 		srvSeq := serverResponse[uAck]

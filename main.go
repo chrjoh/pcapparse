@@ -36,8 +36,8 @@ func main() {
 		ntlm.Parse(*inputFunc, *outputFunc)
 	case "ftp":
 		ftp.Parse(*inputFunc, *outputFunc)
-		//fmt.Println("Not implemented yet")
-		//os.Exit(0)
+	default:
+		fmt.Printf("Unknown type given: %v\n", *typeFunc)
+		os.Exit(0)
 	}
-
 }
