@@ -46,7 +46,7 @@ type responseHeader struct {
 // http://davenport.sourceforge.net/ntlm.html
 // http://www.opensource.apple.com/source/passwordserver_sasl/passwordserver_sasl-166/cyrus_sasl/plugins/ntlm.c
 // offset for the different type of messeges that are sent in a ntlm challenge-response
-var (
+const (
 	NTLM_SIG_OFFSET  = 0
 	NTLM_TYPE_OFFSET = 8
 
@@ -78,7 +78,9 @@ var (
 	NTLM_BUFFER_MAXLEN_OFFSET = 2
 	NTLM_BUFFER_OFFSET_OFFSET = 4
 	NTLM_BUFFER_SIZE          = 8
+)
 
+var (
 	regExp    = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate|Authorization): (NTLM|Negotiate)")
 	regExpCha = regexp.MustCompile("(WWW-|Proxy-|)(Authenticate): (NTLM|Negotiate)")
 	regExpRes = regexp.MustCompile("(WWW-|Proxy-|)(Authorization): (NTLM|Negotiate)")
@@ -102,80 +104,12 @@ func Parse(inputFunc string, outputFunc string) {
 	}
 }
 
-func (n *ntlm) addServerResponse(key uint32, value string) {
-	n.serverResponse[key] = value
-}
-
-func (n *ntlm) addPairs(seq uint32, value string) {
-	if n.serverResponse[seq] != "" {
-		c := challengeResponse{
-			Challenge: n.serverResponse[seq],
-			Response:  value,
-		}
-		n.serverResponsePairs = append(n.serverResponsePairs, c)
-	}
-}
-
-func (n ntlm) serverResp(key uint32) string {
-	return n.serverResponse[key]
-}
-
-// assemble the correct challenge with the response
-func (n *ntlm) handlePacket(packet gopacket.Packet) {
-	app := packet.ApplicationLayer()
-	if app == nil {
-		return
-	}
-	nlen := len(app.Payload())
-	values := strings.Split(string(app.Payload()[:nlen]), "\r\n")
-	for _, s := range values {
-		match := regExp.FindString(s)
-		if match != "" {
-			baseStrings := strings.Split(s, " ")
-			if len(baseStrings) != 3 {
-				return
-			}
-			tcp := packet.TransportLayer().(*layers.TCP)
-			if challenge(s) {
-				n.addServerResponse(tcp.Ack, baseStrings[2])
-			} else if response(s) {
-				n.addPairs(tcp.Seq, baseStrings[2])
-			}
-		}
-	}
-}
-
 func challenge(s string) bool {
 	return regExpCha.FindString(s) != ""
 }
 
 func response(s string) bool {
 	return regExpRes.FindString(s) != ""
-}
-
-func (n ntlm) dumpNtlm(outPutFile string) {
-	file, _ := os.Create(outPutFile)
-	defer file.Close()
-	for _, pair := range n.serverResponsePairs {
-		dataCallenge, _ := base64.StdEncoding.DecodeString(pair.Challenge)
-		dataResponse, _ := base64.StdEncoding.DecodeString(pair.Response)
-		//offset to the challenge and the challenge is 8 bytes long
-		serverChallenge := hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
-		headerValues := setResponseHeaderValues(dataResponse)
-		if headerValues.NtLen == 24 {
-			user, domain, lmHash := getResponseDataNtLMv1(setResponseHeaderValues(dataResponse), dataResponse)
-			if user != "" {
-				// NTLM v1 in .lc format
-				file.WriteString(user + "::" + domain + ":" + lmHash + ":" + serverChallenge + "\n")
-			}
-		} else {
-			user, domain, nthashOne, nthashTwo := getResponseDataNtLMv2(setResponseHeaderValues(dataResponse), dataResponse)
-			if user != "" {
-				// Ntlm v2 in .lc format
-				file.WriteString(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo + "\n")
-			}
-		}
-	}
 }
 
 func getResponseDataNtLMv1(r responseHeader, b []byte) (string, string, string) {
@@ -202,7 +136,93 @@ func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, 
 	return user, domain, nthashOne, nthashTwo
 }
 
-func setResponseHeaderValues(b []byte) responseHeader {
+func (nt *ntlm) addServerResponse(key uint32, value string) {
+	nt.serverResponse[key] = value
+}
+
+func (nt *ntlm) addPairs(seq uint32, value string) {
+	if nt.serverResponse[seq] != "" {
+		c := challengeResponse{
+			Challenge: nt.serverResponse[seq],
+			Response:  value,
+		}
+		nt.serverResponsePairs = append(nt.serverResponsePairs, c)
+	}
+}
+
+func (nt ntlm) serverResp(key uint32) string {
+	return nt.serverResponse[key]
+}
+
+// assemble the correct challenge with the response
+func (nt *ntlm) handlePacket(packet gopacket.Packet) {
+	app := packet.ApplicationLayer()
+	if app == nil {
+		return
+	}
+	nlen := len(app.Payload())
+	values := strings.Split(string(app.Payload()[:nlen]), "\r\n")
+	for _, s := range values {
+		match := regExp.FindString(s)
+		if match != "" {
+			baseStrings := strings.Split(s, " ")
+			if len(baseStrings) != 3 {
+				return
+			}
+			tcp := packet.TransportLayer().(*layers.TCP)
+			if challenge(s) {
+				nt.addServerResponse(tcp.Ack, baseStrings[2])
+			} else if response(s) {
+				nt.addPairs(tcp.Seq, baseStrings[2])
+			}
+		}
+	}
+}
+
+func (nt ntlm) dumpNtlm(outPutFile string) {
+	file, _ := os.Create(outPutFile)
+	defer file.Close()
+	for _, pair := range nt.serverResponsePairs {
+		dataResponse := pair.hexResponse()
+		serverChallenge := pair.getServerChallenge()
+		headerValues := pair.getResponseHeader()
+		if headerValues.NtLen == 24 {
+			user, domain, lmHash := getResponseDataNtLMv1(headerValues, dataResponse)
+			if user != "" {
+				// NTLM v1 in .lc format
+				file.WriteString(user + "::" + domain + ":" + lmHash + ":" + serverChallenge + "\n")
+			}
+		} else {
+			user, domain, nthashOne, nthashTwo := getResponseDataNtLMv2(headerValues, dataResponse)
+			if user != "" {
+				// Ntlm v2 in .lc format
+				file.WriteString(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo + "\n")
+			}
+		}
+	}
+}
+
+func (sr challengeResponse) getServerChallenge() string {
+	dataCallenge, _ := base64.StdEncoding.DecodeString(sr.Challenge)
+	//offset to the challenge and the challenge is 8 bytes long
+	return hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
+}
+
+func (sr challengeResponse) hexChallenge() []byte {
+	dataCallenge, _ := base64.StdEncoding.DecodeString(sr.Challenge)
+	return dataCallenge
+}
+
+func (sr challengeResponse) hexResponse() []byte {
+	dataResponse, _ := base64.StdEncoding.DecodeString(sr.Response)
+	return dataResponse
+}
+
+func (sr challengeResponse) getResponseHeader() responseHeader {
+	b := sr.hexResponse()
+	if len(b) == 0 {
+		return responseHeader{}
+	}
 	return responseHeader{
 		Sig:          strings.Replace(string(b[NTLM_SIG_OFFSET:NTLM_SIG_OFFSET+8]), "\x00", "", -1),
 		Type:         util.ExtractUint32(b, NTLM_TYPE_OFFSET, NTLM_TYPE_OFFSET+4),
