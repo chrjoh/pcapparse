@@ -5,8 +5,8 @@ The program parses the given pcap file trying to extract the ntlm challenge resp
  or ftp user and password. (Was written to crack FFA challenge 2015, part 4)
 
 ## Dependencies
-Pcap parse requires [gopacket](https://github.com/google/gopacket)
-development version of pcaplib need to be installed to compile gopacket.
+Pcap parse requires [gopacket](https://github.com/google/gopacket).
+To compile gopacket header files from pcaplib need to be installed.
 
 ## Installation
 
