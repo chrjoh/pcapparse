@@ -25,7 +25,7 @@ type ftpLogin struct {
 var (
 	regExpFtp  = regexp.MustCompile("(USER|Password required|PASS)")
 	regExpUsr  = regexp.MustCompile("USER")
-	regExpRes  = regexp.MustCompile("Password required")
+	regExpSrv  = regexp.MustCompile("Password required")
 	regExpPass = regexp.MustCompile("PASS")
 )
 
@@ -73,7 +73,7 @@ func (ftp *ftpLogin) handlePacket(packet gopacket.Packet) {
 					Destination: util.GetDstIP(packet),
 					Port:        tcp.DstPort,
 				})
-			} else if regExpRes.FindString(s) != "" {
+			} else if regExpSrv.FindString(s) != "" {
 				ftp.server(tcp.Seq, tcp.Ack)
 			} else if regExpPass.FindString(s) != "" {
 				ftp.pass(tcp.Seq, strings.Split(s, " ")[1])
