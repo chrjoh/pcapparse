@@ -12,12 +12,12 @@ func Parse(inputFunc string, outputFunc string) {
 		panic(err)
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-		ftpData := NewFtpLogin()
+		ftpResult := NewFtpHandler()
 		for packet := range packetSource.Packets() {
 			if util.IsTcpPacket(packet) {
-				ftpData.handlePacket(packet)
+				ftpResult.handlePacket(packet)
 			}
 		}
-		ftpData.dump(outputFunc)
+		ftpResult.dump(outputFunc)
 	}
 }

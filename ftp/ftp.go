@@ -29,8 +29,8 @@ var (
 	regExpPass = regexp.MustCompile("PASS")
 )
 
-// NewFtpLogin returns a ftplogin for handling package selects
-func NewFtpLogin() *ftpLogin {
+// NewFtpHandler returns a ftplogin for handling package selects
+func NewFtpHandler() *ftpLogin {
 	return &ftpLogin{
 		userRequest:    make(map[uint32]string),
 		serverResponse: make(map[uint32]uint32),
