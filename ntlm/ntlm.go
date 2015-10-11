@@ -61,9 +61,9 @@ func (nt *ntlm) handlePacket(packet gopacket.Packet) {
 				return
 			}
 			tcp := packet.TransportLayer().(*layers.TCP)
-			if challenge(s) {
+			if isChallenge(s) {
 				nt.addServerResponse(tcp.Ack, baseStrings[2])
-			} else if response(s) {
+			} else if isResponse(s) {
 				nt.addPairs(tcp.Seq, baseStrings[2])
 			}
 		}
@@ -77,7 +77,7 @@ func (nt ntlm) dump(outPutFile string) {
 		serverChallenge := pair.getServerChallenge()
 		data, err := pair.getResponseData()
 		if err == nil {
-			file.WriteString(data.string(serverChallenge))
+			file.WriteString(data.lcString(serverChallenge))
 		}
 	}
 }
@@ -86,10 +86,10 @@ func isNtlm(s string) bool {
 	return regExp.FindString(s) != ""
 }
 
-func challenge(s string) bool {
+func isChallenge(s string) bool {
 	return regExpCha.FindString(s) != ""
 }
 
-func response(s string) bool {
+func isResponse(s string) bool {
 	return regExpRes.FindString(s) != ""
 }
