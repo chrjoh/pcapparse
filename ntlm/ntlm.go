@@ -55,8 +55,7 @@ func (nt *ntlm) handlePacket(packet gopacket.Packet) {
 	nlen := len(app.Payload())
 	values := strings.Split(string(app.Payload()[:nlen]), "\r\n")
 	for _, s := range values {
-		match := regExp.FindString(s)
-		if match != "" {
+		if isNtlm(s) {
 			baseStrings := strings.Split(s, " ")
 			if len(baseStrings) != 3 {
 				return
@@ -81,6 +80,10 @@ func (nt ntlm) dump(outPutFile string) {
 			file.WriteString(data.string(serverChallenge))
 		}
 	}
+}
+
+func isNtlm(s string) bool {
+	return regExp.FindString(s) != ""
 }
 
 func challenge(s string) bool {
