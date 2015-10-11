@@ -14,15 +14,6 @@ type challengeResponse struct {
 	Response  string
 }
 
-type challengeResponseParsed struct {
-	Type      int
-	User      string
-	Domain    string
-	LmHash    string
-	NtHashOne string
-	NtHashTwo string
-}
-
 type responseHeader struct {
 	Sig          string
 	Type         uint32
@@ -78,15 +69,10 @@ const (
 	NTLM_BUFFER_MAXLEN_OFFSET = 2
 	NTLM_BUFFER_OFFSET_OFFSET = 4
 	NTLM_BUFFER_SIZE          = 8
-)
 
-func (data challengeResponseParsed) string(serverChallenge string) string {
-	// NTLM v1 in .lc format
-	if data.Type == 1 {
-		return data.User + "::" + data.Domain + ":" + data.LmHash + ":" + serverChallenge + "\n"
-	}
-	return data.User + "::" + data.Domain + ":" + serverChallenge + ":" + data.NtHashOne + ":" + data.NtHashTwo + "\n"
-}
+	NtlmV1 = 1
+	NtlmV2 = 2
+)
 
 func (sr challengeResponse) getServerChallenge() string {
 	dataCallenge, _ := base64.StdEncoding.DecodeString(sr.Challenge)
@@ -119,7 +105,7 @@ func (sr *challengeResponse) getResponseDataNtLMv2() (challengeResponseParsed, e
 	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
 	// each char in user and domain is null terminated
 	return challengeResponseParsed{
-		Type:      2,
+		Type:      NtlmV2,
 		User:      strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
 		Domain:    strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
 		NtHashOne: hex.EncodeToString(nthash[:16]), // first part of the hash is 16 bytes
@@ -140,7 +126,7 @@ func (sr challengeResponse) getResponseDataNtLMv1() (challengeResponseParsed, er
 	b := sr.hexResponse()
 	// each char user and domain is null terminated
 	return challengeResponseParsed{
-		Type:   1,
+		Type:   NtlmV1,
 		User:   strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
 		Domain: strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
 		LmHash: hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen]),
