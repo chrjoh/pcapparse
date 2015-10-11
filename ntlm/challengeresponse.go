@@ -3,6 +3,7 @@ package ntlm
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"strings"
 
 	"github.com/chrjoh/pcapparse/util"
@@ -11,6 +12,15 @@ import (
 type challengeResponse struct {
 	Challenge string
 	Response  string
+}
+
+type challengeResponseParsed struct {
+	Type      int
+	User      string
+	Domain    string
+	LmHash    string
+	NtHashOne string
+	NtHashTwo string
 }
 
 type responseHeader struct {
@@ -70,6 +80,14 @@ const (
 	NTLM_BUFFER_SIZE          = 8
 )
 
+func (data challengeResponseParsed) string(serverChallenge string) string {
+	// NTLM v1 in .lc format
+	if data.Type == 1 {
+		return data.User + "::" + data.Domain + ":" + data.LmHash + ":" + serverChallenge + "\n"
+	}
+	return data.User + "::" + data.Domain + ":" + serverChallenge + ":" + data.NtHashOne + ":" + data.NtHashTwo + "\n"
+}
+
 func (sr challengeResponse) getServerChallenge() string {
 	dataCallenge, _ := base64.StdEncoding.DecodeString(sr.Challenge)
 	//offset to the challenge and the challenge is 8 bytes long
@@ -85,7 +103,49 @@ func (sr challengeResponse) hexResponse() []byte {
 	dataResponse, _ := base64.StdEncoding.DecodeString(sr.Response)
 	return dataResponse
 }
+func (sr *challengeResponse) getResponseData() (challengeResponseParsed, error) {
+	if sr.isNtlmV1() {
+		return sr.getResponseDataNtLMv1()
+	}
+	return sr.getResponseDataNtLMv2()
+}
 
+func (sr *challengeResponse) getResponseDataNtLMv2() (challengeResponseParsed, error) {
+	r := sr.getResponseHeader()
+	if r.UserLen == 0 {
+		return challengeResponseParsed{}, errors.New("No repsponse data")
+	}
+	b := sr.hexResponse()
+	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
+	// each char in user and domain is null terminated
+	return challengeResponseParsed{
+		Type:      2,
+		User:      strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
+		Domain:    strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
+		NtHashOne: hex.EncodeToString(nthash[:16]), // first part of the hash is 16 bytes
+		NtHashTwo: hex.EncodeToString(nthash[16:]),
+	}, nil
+}
+
+func (sr challengeResponse) isNtlmV1() bool {
+	headerValues := sr.getResponseHeader()
+	return headerValues.NtLen == 24
+}
+
+func (sr challengeResponse) getResponseDataNtLMv1() (challengeResponseParsed, error) {
+	r := sr.getResponseHeader()
+	if r.UserLen == 0 {
+		return challengeResponseParsed{}, errors.New("No repsponse data")
+	}
+	b := sr.hexResponse()
+	// each char user and domain is null terminated
+	return challengeResponseParsed{
+		Type:   1,
+		User:   strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
+		Domain: strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
+		LmHash: hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen]),
+	}, nil
+}
 func (sr challengeResponse) getResponseHeader() responseHeader {
 	b := sr.hexResponse()
 	if len(b) == 0 {

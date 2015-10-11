@@ -1,7 +1,6 @@
 package ntlm
 
 import (
-	"encoding/hex"
 	"os"
 	"regexp"
 	"strings"
@@ -76,21 +75,10 @@ func (nt ntlm) dump(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	for _, pair := range nt.serverResponsePairs {
-		dataResponse := pair.hexResponse()
 		serverChallenge := pair.getServerChallenge()
-		headerValues := pair.getResponseHeader()
-		if headerValues.NtLen == 24 {
-			user, domain, lmHash := getResponseDataNtLMv1(headerValues, dataResponse)
-			if user != "" {
-				// NTLM v1 in .lc format
-				file.WriteString(user + "::" + domain + ":" + lmHash + ":" + serverChallenge + "\n")
-			}
-		} else {
-			user, domain, nthashOne, nthashTwo := getResponseDataNtLMv2(headerValues, dataResponse)
-			if user != "" {
-				// Ntlm v2 in .lc format
-				file.WriteString(user + "::" + domain + ":" + serverChallenge + ":" + nthashOne + ":" + nthashTwo + "\n")
-			}
+		data, err := pair.getResponseData()
+		if err == nil {
+			file.WriteString(data.string(serverChallenge))
 		}
 	}
 }
@@ -101,28 +89,4 @@ func challenge(s string) bool {
 
 func response(s string) bool {
 	return regExpRes.FindString(s) != ""
-}
-
-func getResponseDataNtLMv1(r responseHeader, b []byte) (string, string, string) {
-	if r.UserLen == 0 {
-		return "", "", ""
-	}
-	// each char is null terminated
-	user := strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1)
-	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
-	lmHash := hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen])
-	return user, domain, lmHash
-}
-
-func getResponseDataNtLMv2(r responseHeader, b []byte) (string, string, string, string) {
-	if r.UserLen == 0 {
-		return "", "", "", ""
-	}
-	// each char is null terminated
-	user := strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1)
-	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
-	domain := strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1)
-	nthashOne := hex.EncodeToString(nthash[:16]) // first part of the hash is 16 bytes
-	nthashTwo := hex.EncodeToString(nthash[16:])
-	return user, domain, nthashOne, nthashTwo
 }
