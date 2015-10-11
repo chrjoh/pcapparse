@@ -64,18 +64,17 @@ func (ftp *ftpLogin) handlePacket(packet gopacket.Packet) {
 	n := len(app.Payload())
 	values := strings.Split(string(app.Payload()[:n]), "\r\n")
 	for _, s := range values {
-		match := regExpFtp.FindString(s)
-		if match != "" {
+		if isFtp(s) {
 			tcp := packet.TransportLayer().(*layers.TCP)
-			if regExpUsr.FindString(s) != "" {
+			if isUser(s) {
 				ftp.user(tcp.Ack, strings.Split(s, " ")[1])
 				ftp.destination(tcp.Ack, destAndPort{
 					Destination: util.GetDstIP(packet),
 					Port:        tcp.DstPort,
 				})
-			} else if regExpSrv.FindString(s) != "" {
+			} else if isServer(s) {
 				ftp.server(tcp.Seq, tcp.Ack)
-			} else if regExpPass.FindString(s) != "" {
+			} else if isPass(s) {
 				ftp.pass(tcp.Seq, strings.Split(s, " ")[1])
 			}
 		}
@@ -84,11 +83,27 @@ func (ftp *ftpLogin) handlePacket(packet gopacket.Packet) {
 
 func (ftp ftpLogin) dump(outPutFile string) {
 	file, _ := os.Create(outPutFile)
-	file.WriteString("#USER:PASSWORD:DST-IP:PORT\n")
 	defer file.Close()
+	file.WriteString("#USER:PASSWORD:DST-IP:PORT\n")
 	for uAck, user := range ftp.userRequest {
 		srvSeq := ftp.serverResponse[uAck]
 		password := ftp.passRequest[srvSeq]
 		file.WriteString(user + ":" + password + ":" + ftp.destPort[uAck].Destination + ":" + ftp.destPort[uAck].Port.String() + "\n")
 	}
+}
+
+func isUser(s string) bool {
+	return regExpUsr.FindString(s) != ""
+}
+
+func isServer(s string) bool {
+	return regExpSrv.FindString(s) != ""
+}
+
+func isPass(s string) bool {
+	return regExpPass.FindString(s) != ""
+}
+
+func isFtp(s string) bool {
+	return regExpFtp.FindString(s) != ""
 }
