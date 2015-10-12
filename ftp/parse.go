@@ -11,6 +11,7 @@ func Parse(inputFunc string, outputFunc string) {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
+		defer handle.Close()
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		ftpResult := NewFtpHandler()
 		for packet := range packetSource.Packets() {
