@@ -16,9 +16,9 @@ func Parse(inputFunc string, outputFunc string) {
 		ftpResult := NewFtpHandler()
 		for packet := range packetSource.Packets() {
 			if util.IsTcpPacket(packet) {
-				ftpResult.handlePacket(packet)
+				ftpResult.HandlePacket(packet)
 			}
 		}
-		ftpResult.dump(outputFunc)
+		ftpResult.Dump(outputFunc)
 	}
 }

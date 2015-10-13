@@ -47,7 +47,7 @@ func (nt ntlm) serverResp(key uint32) string {
 }
 
 // assemble the correct challenge with the response
-func (nt *ntlm) handlePacket(packet gopacket.Packet) {
+func (nt *ntlm) HandlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
@@ -70,14 +70,15 @@ func (nt *ntlm) handlePacket(packet gopacket.Packet) {
 	}
 }
 
-func (nt ntlm) dump(outPutFile string) {
+// Dump write the result to the given file
+func (nt ntlm) Dump(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	for _, pair := range nt.serverResponsePairs {
 		serverChallenge := pair.getServerChallenge()
 		data, err := pair.getResponseData()
 		if err == nil {
-			file.WriteString(data.lcString(serverChallenge))
+			file.WriteString(data.LcString(serverChallenge))
 		}
 	}
 }

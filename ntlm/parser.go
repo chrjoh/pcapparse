@@ -16,9 +16,9 @@ func Parse(inputFunc string, outputFunc string) {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
 			if util.IsTcpPacket(packet) {
-				ntlmResult.handlePacket(packet)
+				ntlmResult.HandlePacket(packet)
 			}
 		}
-		ntlmResult.dump(outputFunc)
+		ntlmResult.Dump(outputFunc)
 	}
 }

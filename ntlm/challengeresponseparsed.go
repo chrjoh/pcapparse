@@ -9,7 +9,8 @@ type challengeResponseParsed struct {
 	NtHashTwo string
 }
 
-func (data challengeResponseParsed) lcString(serverChallenge string) string {
+// LcString return the challenge response data as lc string
+func (data challengeResponseParsed) LcString(serverChallenge string) string {
 	// NTLM v1 in .lc format
 	if data.Type == NtlmV1 {
 		return data.User + "::" + data.Domain + ":" + data.LmHash + ":" + serverChallenge + "\n"

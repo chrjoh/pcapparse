@@ -46,7 +46,7 @@ var testFtpPasswordPacket []byte = []byte{
 
 func TestGetUserName(t *testing.T) {
 	h := NewFtpHandler()
-	h.handlePacket(createIPv4TCPPacket(testFtpUserPacket))
+	h.HandlePacket(createIPv4TCPPacket(testFtpUserPacket))
 	if len(h.userRequest) != 1 {
 		t.Fatalf("Wanted one user got: %v", len(h.userRequest))
 	}
@@ -59,7 +59,7 @@ func TestGetUserName(t *testing.T) {
 
 func TestServerResponse(t *testing.T) {
 	h := NewFtpHandler()
-	h.handlePacket(createIPv4TCPPacket(testFtpSrvResponsePacket))
+	h.HandlePacket(createIPv4TCPPacket(testFtpSrvResponsePacket))
 	if len(h.serverResponse) != 1 {
 		t.Fatalf("Wanted one server response got: %v", len(h.serverResponse))
 	}
@@ -67,7 +67,7 @@ func TestServerResponse(t *testing.T) {
 
 func TestGetUserPassword(t *testing.T) {
 	h := NewFtpHandler()
-	h.handlePacket(createIPv4TCPPacket(testFtpPasswordPacket))
+	h.HandlePacket(createIPv4TCPPacket(testFtpPasswordPacket))
 	if len(h.passRequest) != 1 {
 		t.Fatalf("Wanted one password request got: %v", len(h.passRequest))
 	}

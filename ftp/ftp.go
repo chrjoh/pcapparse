@@ -56,7 +56,7 @@ func (ftp *ftpLogin) destination(key uint32, value destAndPort) {
 }
 
 // Extract the ftp login reposnses and requests
-func (ftp *ftpLogin) handlePacket(packet gopacket.Packet) {
+func (ftp *ftpLogin) HandlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
 	if app == nil {
 		return
@@ -81,7 +81,8 @@ func (ftp *ftpLogin) handlePacket(packet gopacket.Packet) {
 	}
 }
 
-func (ftp ftpLogin) dump(outPutFile string) {
+//Dump store the result on the given file
+func (ftp ftpLogin) Dump(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	file.WriteString("#USER:PASSWORD:DST-IP:PORT\n")

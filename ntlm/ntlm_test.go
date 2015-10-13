@@ -190,13 +190,13 @@ var challengeResponseLc = "dr_evil::ULAIR-SURF-PC:1122334455667788:dfce84e8f4770
 
 func TestChallengeResponse(t *testing.T) {
 	h := NewNtlmHandler()
-	h.handlePacket(createIPv4TCPPacket(challengePacket))
-	h.handlePacket(createIPv4TCPPacket(responsePacket))
+	h.HandlePacket(createIPv4TCPPacket(challengePacket))
+	h.HandlePacket(createIPv4TCPPacket(responsePacket))
 
 	for _, pair := range h.serverResponsePairs {
 		serverChallenge := pair.getServerChallenge()
 		data, _ := pair.getResponseData()
-		lc := data.lcString(serverChallenge)
+		lc := data.LcString(serverChallenge)
 		if strings.Compare(lc, challengeResponseLc) != 0 {
 			t.Fatalf("wanted: %v got: %v", challengeResponseLc, lc)
 		}
