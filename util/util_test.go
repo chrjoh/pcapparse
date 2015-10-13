@@ -51,7 +51,7 @@ func TestGetDestIP(t *testing.T) {
 	packet := createIPv4TCPPacket()
 	ip := GetDstIP(packet)
 	if ip != "173.222.254.225" {
-		t.Fatalf("Could not parse dest ip from packet got: %v, wanted: 1.2.3.4", ip)
+		t.Fatalf("Could not parse dest ip from packet got: %v, wanted: 173.222.254.225", ip)
 	}
 }
 
