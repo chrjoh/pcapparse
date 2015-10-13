@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chrjoh/pcapparse/ftp"
-	"github.com/chrjoh/pcapparse/ntlm"
+	"github.com/chrjoh/pcapparse/pcapparse"
 )
 
 // to crack the passwords following john the ripper was used passwords.txt conatins list of passwords that are gonna be tested
@@ -31,13 +30,6 @@ func main() {
 
 	// Parse the command line flags
 	flag.Parse()
-	switch *typeFunc {
-	case "ntlm":
-		ntlm.Parse(*inputFunc, *outputFunc)
-	case "ftp":
-		ftp.Parse(*inputFunc, *outputFunc)
-	default:
-		fmt.Printf("Unknown type given: %v\n", *typeFunc)
-		os.Exit(0)
-	}
+
+	pcapparse.Parse(*typeFunc, *inputFunc, *outputFunc)
 }
