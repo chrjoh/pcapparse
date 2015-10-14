@@ -13,10 +13,10 @@ func Handler(typeFunc, inputFunc, outputFunc string) {
 
 	switch typeFunc {
 	case "ntlm":
-		ntlmHandler := ntlm.Parse(inputFunc, outputFunc)
+		ntlmHandler := ntlm.Parse(inputFunc)
 		ntlmHandler.WriteToFile(outputFunc)
 	case "ftp":
-		ftpHandler := ftp.Parse(inputFunc, outputFunc)
+		ftpHandler := ftp.Parse(inputFunc)
 		ftpHandler.WriteToFile(outputFunc)
 	default:
 		fmt.Printf("Unknown type given: %v\n", typeFunc)
