@@ -7,7 +7,7 @@ import (
 )
 
 // Parse go through the given pcap file and selects ftp logins and save in the given output file
-func Parse(inputFunc string, outputFunc string) {
+func Parse(inputFunc string, outputFunc string) *ftpLogin {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
@@ -19,6 +19,6 @@ func Parse(inputFunc string, outputFunc string) {
 				ftpResult.HandlePacket(packet)
 			}
 		}
-		ftpResult.Dump(outputFunc)
+		return ftpResult
 	}
 }

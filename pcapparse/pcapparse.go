@@ -8,14 +8,16 @@ import (
 	"github.com/chrjoh/pcapparse/ntlm"
 )
 
-// Parse parse the fiven file for ntlm or ftp user data
-func Parse(typeFunc, inputFunc, outputFunc string) {
+// Handler parse the fiven file for ntlm or ftp user data
+func Handler(typeFunc, inputFunc, outputFunc string) {
 
 	switch typeFunc {
 	case "ntlm":
-		ntlm.Parse(inputFunc, outputFunc)
+		ntlmHandler := ntlm.Parse(inputFunc, outputFunc)
+		ntlmHandler.WriteToFile(outputFunc)
 	case "ftp":
-		ftp.Parse(inputFunc, outputFunc)
+		ftpHandler := ftp.Parse(inputFunc, outputFunc)
+		ftpHandler.WriteToFile(outputFunc)
 	default:
 		fmt.Printf("Unknown type given: %v\n", typeFunc)
 		os.Exit(0)

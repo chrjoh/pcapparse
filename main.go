@@ -31,5 +31,5 @@ func main() {
 	// Parse the command line flags
 	flag.Parse()
 
-	pcapparse.Parse(*typeFunc, *inputFunc, *outputFunc)
+	pcapparse.Handler(*typeFunc, *inputFunc, *outputFunc)
 }

@@ -81,8 +81,8 @@ func (ftp *ftpLogin) HandlePacket(packet gopacket.Packet) {
 	}
 }
 
-//Dump store the result on the given file
-func (ftp ftpLogin) Dump(outPutFile string) {
+//WriteToFile store the result on the given file
+func (ftp ftpLogin) WriteToFile(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	file.WriteString("#USER:PASSWORD:DST-IP:PORT\n")

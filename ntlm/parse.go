@@ -7,7 +7,7 @@ import (
 )
 
 // Parse the given pcap file for ntlm challenge/responsees and stores them on the given output file
-func Parse(inputFunc string, outputFunc string) {
+func Parse(inputFunc string, outputFunc string) *ntlm {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
@@ -19,6 +19,6 @@ func Parse(inputFunc string, outputFunc string) {
 				ntlmResult.HandlePacket(packet)
 			}
 		}
-		ntlmResult.Dump(outputFunc)
+		return ntlmResult
 	}
 }

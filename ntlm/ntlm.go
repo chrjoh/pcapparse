@@ -70,8 +70,8 @@ func (nt *ntlm) HandlePacket(packet gopacket.Packet) {
 	}
 }
 
-// Dump write the result to the given file
-func (nt ntlm) Dump(outPutFile string) {
+// WriteToFile write the result to the given file
+func (nt ntlm) WriteToFile(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	for _, pair := range nt.serverResponsePairs {
