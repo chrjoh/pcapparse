@@ -28,25 +28,7 @@ func NewNtlmHandler() *ntlm {
 	}
 }
 
-func (nt *ntlm) addServerResponse(key uint32, value string) {
-	nt.serverResponse[key] = value
-}
-
-func (nt *ntlm) addPairs(seq uint32, value string) {
-	if nt.serverResponse[seq] != "" {
-		c := challengeResponse{
-			Challenge: nt.serverResponse[seq],
-			Response:  value,
-		}
-		nt.serverResponsePairs = append(nt.serverResponsePairs, c)
-	}
-}
-
-func (nt ntlm) serverResp(key uint32) string {
-	return nt.serverResponse[key]
-}
-
-// assemble the correct challenge with the response
+// HandlePacket assemble the correct challenge with the response
 func (nt *ntlm) HandlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
 	if app == nil {
@@ -80,6 +62,24 @@ func (nt ntlm) WriteToFile(outPutFile string) {
 			file.WriteString(data.LcString())
 		}
 	}
+}
+
+func (nt *ntlm) addServerResponse(key uint32, value string) {
+	nt.serverResponse[key] = value
+}
+
+func (nt *ntlm) addPairs(seq uint32, value string) {
+	if nt.serverResponse[seq] != "" {
+		c := challengeResponse{
+			Challenge: nt.serverResponse[seq],
+			Response:  value,
+		}
+		nt.serverResponsePairs = append(nt.serverResponsePairs, c)
+	}
+}
+
+func (nt ntlm) serverResp(key uint32) string {
+	return nt.serverResponse[key]
 }
 
 func isNtlm(s string) bool {

@@ -39,22 +39,6 @@ func NewFtpHandler() *ftpLogin {
 	}
 }
 
-func (ftp *ftpLogin) user(key uint32, value string) {
-	ftp.userRequest[key] = value
-}
-
-func (ftp *ftpLogin) server(key, value uint32) {
-	ftp.serverResponse[key] = value
-}
-
-func (ftp *ftpLogin) pass(key uint32, value string) {
-	ftp.passRequest[key] = value
-}
-
-func (ftp *ftpLogin) destination(key uint32, value destAndPort) {
-	ftp.destPort[key] = value
-}
-
 // Extract the ftp login reposnses and requests
 func (ftp *ftpLogin) HandlePacket(packet gopacket.Packet) {
 	app := packet.ApplicationLayer()
@@ -91,6 +75,22 @@ func (ftp ftpLogin) WriteToFile(outPutFile string) {
 		password := ftp.passRequest[srvSeq]
 		file.WriteString(user + ":" + password + ":" + ftp.destPort[uAck].Destination + ":" + ftp.destPort[uAck].Port.String() + "\n")
 	}
+}
+
+func (ftp *ftpLogin) user(key uint32, value string) {
+	ftp.userRequest[key] = value
+}
+
+func (ftp *ftpLogin) server(key, value uint32) {
+	ftp.serverResponse[key] = value
+}
+
+func (ftp *ftpLogin) pass(key uint32, value string) {
+	ftp.passRequest[key] = value
+}
+
+func (ftp *ftpLogin) destination(key uint32, value destAndPort) {
+	ftp.destPort[key] = value
 }
 
 func isUser(s string) bool {
