@@ -6,8 +6,8 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-// Parse go through the given pcap file and selects ftp logins and save in the given output file
-func Parse(inputFunc string, outputFunc string) *ftpLogin {
+// Parse go through the given pcap file and selects ftp logins
+func Parse(inputFunc string) *ftpLogin {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {

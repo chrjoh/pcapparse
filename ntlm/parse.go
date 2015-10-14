@@ -6,8 +6,8 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-// Parse the given pcap file for ntlm challenge/responsees and stores them on the given output file
-func Parse(inputFunc string, outputFunc string) *ntlm {
+// Parse the given pcap file for ntlm challenge/responsees
+func Parse(inputFunc string) *ntlm {
 	if handle, err := pcap.OpenOffline(inputFunc); err != nil {
 		panic(err)
 	} else {
