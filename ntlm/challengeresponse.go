@@ -105,11 +105,12 @@ func (sr *challengeResponse) getResponseDataNtLMv2() (challengeResponseParsed, e
 	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
 	// each char in user and domain is null terminated
 	return challengeResponseParsed{
-		Type:      NtlmV2,
-		User:      strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
-		Domain:    strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
-		NtHashOne: hex.EncodeToString(nthash[:16]), // first part of the hash is 16 bytes
-		NtHashTwo: hex.EncodeToString(nthash[16:]),
+		Type:            NtlmV2,
+		ServerChallenge: sr.getServerChallenge(),
+		User:            strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
+		Domain:          strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
+		NtHashOne:       hex.EncodeToString(nthash[:16]), // first part of the hash is 16 bytes
+		NtHashTwo:       hex.EncodeToString(nthash[16:]),
 	}, nil
 }
 
@@ -126,10 +127,11 @@ func (sr challengeResponse) getResponseDataNtLMv1() (challengeResponseParsed, er
 	b := sr.responseBytes()
 	// each char user and domain is null terminated
 	return challengeResponseParsed{
-		Type:   NtlmV1,
-		User:   strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
-		Domain: strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
-		LmHash: hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen]),
+		Type:            NtlmV1,
+		ServerChallenge: sr.getServerChallenge(),
+		User:            strings.Replace(string(b[r.UserOffset:r.UserOffset+r.UserLen]), "\x00", "", -1),
+		Domain:          strings.Replace(string(b[r.DomainOffset:r.DomainOffset+r.DomainLen]), "\x00", "", -1),
+		LmHash:          hex.EncodeToString(b[r.LmOffset : r.LmOffset+r.LmLen]),
 	}, nil
 }
 func (sr challengeResponse) getResponseHeader() responseHeader {

@@ -75,10 +75,9 @@ func (nt ntlm) WriteToFile(outPutFile string) {
 	file, _ := os.Create(outPutFile)
 	defer file.Close()
 	for _, pair := range nt.serverResponsePairs {
-		serverChallenge := pair.getServerChallenge()
 		data, err := pair.getResponseData()
 		if err == nil {
-			file.WriteString(data.LcString(serverChallenge))
+			file.WriteString(data.LcString())
 		}
 	}
 }

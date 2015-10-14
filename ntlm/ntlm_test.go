@@ -194,9 +194,8 @@ func TestChallengeResponse(t *testing.T) {
 	h.HandlePacket(createIPv4TCPPacket(responsePacket))
 
 	for _, pair := range h.serverResponsePairs {
-		serverChallenge := pair.getServerChallenge()
 		data, _ := pair.getResponseData()
-		lc := data.LcString(serverChallenge)
+		lc := data.LcString()
 		if strings.Compare(lc, challengeResponseLc) != 0 {
 			t.Fatalf("wanted: %v got: %v", challengeResponseLc, lc)
 		}
