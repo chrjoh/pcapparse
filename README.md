@@ -2,7 +2,7 @@ PCAPparse
 =========
 
 The program parses the given pcap file trying to extract the ntlm challenge response
- or ftp user and password. (Was written to crack FFA challenge 2015, part 4)
+ or ftp user and password. (Was written to crack FRA challenge 2015, part 4)
 
 ## Dependencies
 Pcap parse requires [gopacket](https://github.com/google/gopacket).
