@@ -46,7 +46,7 @@ func (nt *ntlm) HandlePacket(packet gopacket.Packet) {
 			if isChallenge(s) {
 				nt.addServerResponse(tcp.Ack, baseStrings[2])
 			} else if isResponse(s) {
-				nt.addPairs(tcp.Seq, baseStrings[2])
+				nt.addClientResponse(tcp.Seq, baseStrings[2])
 			}
 		}
 	}
@@ -68,7 +68,7 @@ func (nt *ntlm) addServerResponse(key uint32, value string) {
 	nt.serverResponse[key] = value
 }
 
-func (nt *ntlm) addPairs(seq uint32, value string) {
+func (nt *ntlm) addClientResponse(seq uint32, value string) {
 	if nt.serverResponse[seq] != "" {
 		c := challengeResponse{
 			Challenge: nt.serverResponse[seq],
@@ -76,10 +76,6 @@ func (nt *ntlm) addPairs(seq uint32, value string) {
 		}
 		nt.serverResponsePairs = append(nt.serverResponsePairs, c)
 	}
-}
-
-func (nt ntlm) serverResp(key uint32) string {
-	return nt.serverResponse[key]
 }
 
 func isNtlm(s string) bool {

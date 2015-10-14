@@ -75,17 +75,17 @@ const (
 )
 
 func (sr challengeResponse) getServerChallenge() string {
-	dataCallenge := sr.challengeBytes()
+	dataCallenge := sr.getChallengeBytes()
 	//offset to the challenge and the challenge is 8 bytes long
 	return hex.EncodeToString(dataCallenge[NTLM_TYPE2_CHALLENGE_OFFSET : NTLM_TYPE2_CHALLENGE_OFFSET+8])
 }
 
-func (sr challengeResponse) challengeBytes() []byte {
+func (sr challengeResponse) getChallengeBytes() []byte {
 	dataCallenge, _ := base64.StdEncoding.DecodeString(sr.Challenge)
 	return dataCallenge
 }
 
-func (sr challengeResponse) responseBytes() []byte {
+func (sr challengeResponse) getResponseBytes() []byte {
 	dataResponse, _ := base64.StdEncoding.DecodeString(sr.Response)
 	return dataResponse
 }
@@ -101,7 +101,7 @@ func (sr *challengeResponse) getResponseDataNtLMv2() (challengeResponseParsed, e
 	if r.UserLen == 0 {
 		return challengeResponseParsed{}, errors.New("No repsponse data")
 	}
-	b := sr.responseBytes()
+	b := sr.getResponseBytes()
 	nthash := b[r.NtOffset : r.NtOffset+r.NtLen]
 	// each char in user and domain is null terminated
 	return challengeResponseParsed{
@@ -124,7 +124,7 @@ func (sr challengeResponse) getResponseDataNtLMv1() (challengeResponseParsed, er
 	if r.UserLen == 0 {
 		return challengeResponseParsed{}, errors.New("No repsponse data")
 	}
-	b := sr.responseBytes()
+	b := sr.getResponseBytes()
 	// each char user and domain is null terminated
 	return challengeResponseParsed{
 		Type:            NtlmV1,
@@ -135,7 +135,7 @@ func (sr challengeResponse) getResponseDataNtLMv1() (challengeResponseParsed, er
 	}, nil
 }
 func (sr challengeResponse) getResponseHeader() responseHeader {
-	b := sr.responseBytes()
+	b := sr.getResponseBytes()
 	if len(b) == 0 {
 		return responseHeader{}
 	}
