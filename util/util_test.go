@@ -62,6 +62,21 @@ func TestIsTCP(t *testing.T) {
 		t.Fatal("Did not get a TCP packet")
 	}
 }
+
+func TestExtractuint16(t *testing.T) {
+	result := ExtractUint16([]byte{0x04, 0x00}, 0, 2)
+	if result != 4 {
+		t.Fatalf("Wanted: 4, got: %v", result)
+	}
+}
+
+func TestExtractuint32(t *testing.T) {
+	result := ExtractUint32([]byte{0x04, 0x00, 0x00, 0x00}, 0, 4)
+	if result != 4 {
+		t.Fatalf("Wanted: 4, got: %v", result)
+	}
+}
+
 func createIPv4TCPPacket() gopacket.Packet {
 	return gopacket.NewPacket(testSimpleTCPPacket, layers.LinkTypeEthernet, gopacket.DecodeOptions{Lazy: true, NoCopy: true})
 
