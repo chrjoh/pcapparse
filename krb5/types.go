@@ -74,7 +74,7 @@ type kdcReqBody struct {
 	AdditionalTickets []ticket       `asn1:"optional,explicit,tag:11"`
 }
 
-// $krb5$PnData[0].PnDataValue.Etype$Cname.NameString[0]$Realm$dummy$cipher
+// $krb5$PnData[0].PnDataValue.Etype$Cname.NameString[0]$Realm$nodata$cipher
 func (kdc kdcReq) String() (string, error) {
 	var eType, cipher string
 	var crypt []string
