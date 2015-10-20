@@ -28,6 +28,17 @@ func IsTcpPacket(packet gopacket.Packet) bool {
 	return true
 }
 
+// IsUdpPacket returns true if the packet is of UDP type
+func IsUdpPacket(packet gopacket.Packet) bool {
+	if packet == nil {
+		return false
+	}
+	if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeUDP {
+		return false
+	}
+	return true
+}
+
 // ExtractUint32 returns the given byte list as a uint32 take care of Little or Big Endian
 func ExtractUint32(b []byte, start, end int) uint32 {
 	if isLittleEndian() {

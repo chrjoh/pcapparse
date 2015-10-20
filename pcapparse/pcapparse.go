@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/chrjoh/pcapparse/ftp"
+	"github.com/chrjoh/pcapparse/krb5"
 	"github.com/chrjoh/pcapparse/ntlm"
 )
 
@@ -18,6 +19,11 @@ func Handler(typeFunc, inputFunc, outputFunc string) {
 	case "ftp":
 		ftpHandler := ftp.Parse(inputFunc)
 		ftpHandler.WriteToFile(outputFunc)
+	case "krb":
+		//krb.Parse(inputFunc)
+		krbHandler := krb5.Parse(inputFunc)
+		krbHandler.DumpStrings()
+		//	krbHandler.WriteToFile(outputFunc)
 	default:
 		fmt.Printf("Unknown type given: %v\n", typeFunc)
 		os.Exit(0)
