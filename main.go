@@ -17,7 +17,7 @@ var (
 	// Command line flags
 	inputFunc  = flag.String("i", pcapFile, "Input file (.pcap)")
 	outputFunc = flag.String("o", outputFile, "Output file (.lc)")
-	typeFunc   = flag.String("t", "ntlm", "Type select what tor parse the pcap file for, options: ntlm, ftp")
+	typeFunc   = flag.String("t", "ntlm", "Type select what tor parse the pcap file for, options: ntlm, ftp, krb5")
 )
 
 func main() {

@@ -2,7 +2,10 @@ PCAPparse
 =========
 
 The program parses the given pcap file trying to extract the ntlm challenge response
- or ftp user and password. (Was written to crack FRA challenge 2015, part 4)
+ or ftp user and password. (Was written to crack FRA challenge 2015, part 4).
+
+Adding kerberos v5 parsing using asn.1 parser, mostly to learn how this is done. It is
+experimental and at the moment only looks for kerberos UDP requests on port 88.
 
 ## Dependencies
 Pcap parse requires [gopacket](https://github.com/google/gopacket).
@@ -23,7 +26,7 @@ Command line arguments:
 
   -i "steg3.pcap": Input file (.pcap)
   -o "output_steg3.lc": Output file (.lc)
-  -t "ntlm" select what type to look for in the pcap file: ntlm or ftp
+  -t "ntlm" select what type to look for in the pcap file: ntlm, ftp or krb5
 ```
 
 ## License (MIT)

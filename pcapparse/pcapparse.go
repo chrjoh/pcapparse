@@ -19,7 +19,7 @@ func Handler(typeFunc, inputFunc, outputFunc string) {
 	case "ftp":
 		ftpHandler := ftp.Parse(inputFunc)
 		ftpHandler.WriteToFile(outputFunc)
-	case "krb":
+	case "krb5":
 		//krb.Parse(inputFunc)
 		krbHandler := krb5.Parse(inputFunc)
 		krbHandler.DumpStrings()
