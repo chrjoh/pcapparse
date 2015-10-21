@@ -88,7 +88,10 @@ func (kdc kdcReq) String() (string, error) {
 	}
 	for _, pn := range kdc.PnData {
 		if pn.PnDataType == 2 {
-			enc, _ := pn.getParsedValue()
+			enc, err := pn.getParsedValue()
+			if err != nil {
+				return "", errors.New("Failed to extract pnData from as-req")
+			}
 			eType = strconv.Itoa(enc.Etype)
 			cipher = hex.EncodeToString(enc.Cipher)
 		}
