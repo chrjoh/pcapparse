@@ -74,6 +74,13 @@ type kdcReqBody struct {
 	AdditionalTickets []ticket       `asn1:"optional,explicit,tag:11"`
 }
 
+//KRB_AS_REQ.padata.PA-ENC-TIMESTAMP.Value.encPA_ENC_TIMESTAMP
+//checksum = 16 first bytes of ENC_PA_ENC_TIMESTAMP
+//encrypted_data = ENC_PA_ENC_TIMESTAMP starting at byte 17 (i.e. ENC_PA_ENC_TIMESTAMP without the checksum)
+//pwd: the round password being tried
+
+//http://john-users.openwall.narkive.com/kGRlTMyG/john-the-ripper-for-kerberos-ticket
+//https://github.com/piyushcse29/john-the-ripper/blob/master/src/KRB5_fmt_plug.c
 // $krb5$PnData[0].PnDataValue.Etype$Cname.NameString[0]$Realm$nodata$cipher
 func (kdc kdcReq) String() (string, error) {
 	var eType, cipher string
